@@ -5,13 +5,11 @@ pipeline {
     }
     agent {
       node {
-        //TODO: Add label for Node.js jenkins agent
         label 'nodejs'
       }
     }
 
     environment {
-        //TODO: Edit these vars as per your env
         DEV_PROJECT = "kristie-hunter-ibm-com-books-dev"
         STAGE_PROJECT = "kristie-hunter-ibm-com-books-stage"
         APP_GIT_URL = "https://github.com/kristiehunter/DO288-apps"
@@ -59,7 +57,6 @@ pipeline {
                    '''
 
                 echo '### Creating a new app in DEV env ###'
-                //TODO: Create a new app and expose the service
                 sh '''
                         oc project ${DEV_PROJECT}
                         oc new-app --name books nodejs:8~${APP_GIT_URL} \
@@ -108,7 +105,6 @@ pipeline {
                 timeout(time: 60, unit: 'MINUTES') {
                     input message: "Promote to Staging?"
                 }
-                //TODO: Tag the books:latest image stream as books:stage
                 script {
 			openshift.withCluster() {
 			openshift.tag("${DEV_PROJECT}/books:latest", "${STAGE_PROJECT}/books:stage")
@@ -139,13 +135,12 @@ pipeline {
         stage('Wait for deployment in Staging') {
             steps {
                 sh "oc get route ${APP_NAME} -n ${STAGE_PROJECT} -o jsonpath='{ .spec.host }' --loglevel=4 > routehost"
-
                 script {
                     routeHost = readFile('routehost').trim()
 
                     openshift.withCluster() {
                         //TODO: Watch deployment until pod is in 'Running' state
-			openshift.withProject("${STAGEPROJECT}") {
+			openshift.withProject( "${STAGEPROJECT}" ) {
 				def deployment = openshift.selector("dc", "${APP_NAME}").rollout()
 				openshift.selector("dc", "${APP_NAME}").related('pods').untilEach(1)
 				{
